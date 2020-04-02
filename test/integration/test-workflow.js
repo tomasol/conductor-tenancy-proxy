@@ -1,14 +1,14 @@
+const Router = require("express");
 const assert = require('assert').strict;;
 var qs = require('qs');
-const http = require('http');
-const connect = require('connect');
 const request = require('request');
-const proxyUtils = require(__dirname + '/../../src/proxy-utils.js'); // TODO
-const transformerRegistry = require(__dirname + '/../../src/transformer-registry.js'); // TODO
+const proxy = require('../../src/proxy.js');
+const transformerRegistry = require('../../src/transformer-registry.js');
 
-// constants
-const mockServerPort = 9090;
-const testProxyPort = 9091;
+const mockServerPort = process.env.TEST_MOCK_PORT || 9090;
+const mockServerHost = process.env.TEST_MOCK_HOST || 'localhost';
+const testProxyPort = process.env.TEST_PROXY_PORT || 9091;
+const testProxyHost = process.env.TEST_PROXY_HOST || 'localhost';
 
 const mockedSearchResponse = function (nameArray) {
   const arr = [];
@@ -43,7 +43,7 @@ const mockedSearchResponse = function (nameArray) {
 describe('Workflow API', function () {
   var mockServer;
   var proxyServer;
-  var mockedSearchFun = function(req, res) {
+  var mockedSearchFun = function (req, res) {
     // happy path, no checks
     res.writeHead(200, { 'Content-Type': 'application/javascript' });
     res.end(JSON.stringify(mockedSearchResponse(['FB_A', 'FB_B'])));
@@ -51,17 +51,22 @@ describe('Workflow API', function () {
 
   this.beforeAll(function () {
     // configure mock server
-    const app = connect();
-    app.use('/api/workflow/search', function (req, res) {
+    const mockApp = Router();
+    mockApp.use('/api/workflow/search', function (req, res) {
       mockedSearchFun(req, res);
     });
     // start mock server
-    mockServer = http.createServer(app).listen(mockServerPort);
+    mockServer = mockApp.listen(mockServerPort, mockServerHost);
 
     // start test proxy server
     const transformers = transformerRegistry.init();
-    const proxyTarget = 'http://localhost:' + mockServerPort;
-    proxyServer = proxyUtils.startProxy(transformers, testProxyPort, proxyTarget);
+    const proxyTarget = `http://${mockServerHost}:${mockServerPort}`;
+
+    const proxyRouter = proxy.configure(transformers, proxyTarget);
+    const app = Router();
+
+    app.use("/", proxyRouter);
+    proxyServer = app.listen(testProxyPort, testProxyHost);
   });
   this.afterAll(function () {
     mockServer.close();
@@ -71,18 +76,19 @@ describe('Workflow API', function () {
   describe('search', function () {
     this.timeout(5000);
 
-    const searchURL = 'http://localhost:' + testProxyPort + '/api/workflow/search';
+    const searchURL = `http://${testProxyHost}:${testProxyPort}/api/workflow/search`;
 
     it('should fail if tenant id is not sent', function (done) {
       request(searchURL, function (error, response, body) {
-        assert.equal(response.statusCode, 500);
-        assert.ok(body.indexOf('x-auth-organization header not found') != -1, 'Expected string not found in ' + body);
+        assert.equal(response.statusCode, 400);
+        assert.ok(body.indexOf('x-auth-organization header not found') != -1,
+          'Expected string not found in ' + body);
         done();
       });
     });
 
     it('should handle tenantId transparently', function (done) {
-      mockedSearchFun = function(req, res) {
+      mockedSearchFun = function (req, res) {
         var originalQueryString = req._parsedUrl.query;
         var parsedQuery = qs.parse(originalQueryString);
         var q = parsedQuery['query'];
@@ -109,7 +115,7 @@ describe('Workflow API', function () {
 
 
     it('should pass query string with correct prefix', function (done) {
-      mockedSearchFun = function(req, res) {
+      mockedSearchFun = function (req, res) {
         var originalQueryString = req._parsedUrl.query;
         var parsedQuery = qs.parse(originalQueryString);
         var q = parsedQuery['query'];

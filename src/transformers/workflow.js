@@ -8,7 +8,7 @@ var before = function(tenantId, req) {
     var q = parsedQuery['query'];
     var limitToTenant = 'workflowType STARTS_WITH \'' + tenantId + '_\''
     if (q) {
-        // TODO: validate query to prevent security issues
+        // TODO: validate conductor query to prevent security issues
         q = limitToTenant + ' AND (' + q + ')';
     } else {
         q = limitToTenant;
