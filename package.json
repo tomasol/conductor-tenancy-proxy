@@ -1,0 +1,23 @@
+{
+  "name": "tenancy-proxy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "intergration": "./node_modules/mocha/bin/mocha --recursive test/integration/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "connect": "^3.7.0",
+    "http": "0.0.1-security",
+    "http-proxy": "^1.18.0",
+    "qs": "^6.9.3"
+  },
+  "devDependencies": {
+    "mocha": "^7.1.1",
+    "request": "^2.88.2"
+  }
+}
