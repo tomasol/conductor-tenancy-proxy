@@ -16,3 +16,6 @@ npm start
 ```
 npm run intergration
 ```
+
+## TODOs
+* handle connection issues, exceptions

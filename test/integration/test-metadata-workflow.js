@@ -9,6 +9,7 @@ const mockServerPort = process.env.TEST_MOCK_PORT || 9090;
 const mockServerHost = process.env.TEST_MOCK_HOST || 'localhost';
 const testProxyPort = process.env.TEST_PROXY_PORT || 9091;
 const testProxyHost = process.env.TEST_PROXY_HOST || 'localhost';
+const proxyPath = 'conductor-proxy';
 
 const mockedSearchResponse = function (nameArray) {
   const arr = [];
@@ -65,7 +66,7 @@ describe('Workflow API', function () {
     const proxyRouter = proxy.configure(transformers, proxyTarget);
     const app = Router();
 
-    app.use("/", proxyRouter);
+    app.use('/' + proxyPath, proxyRouter);
     proxyServer = app.listen(testProxyPort, testProxyHost);
   });
   this.afterAll(function () {
@@ -76,7 +77,7 @@ describe('Workflow API', function () {
   describe('search', function () {
     this.timeout(5000);
 
-    const searchURL = `http://${testProxyHost}:${testProxyPort}/api/workflow/search`;
+    const searchURL = `http://${testProxyHost}:${testProxyPort}/${proxyPath}/api/workflow/search`;
 
     it('should fail if tenant id is not sent', function (done) {
       request(searchURL, function (error, response, body) {

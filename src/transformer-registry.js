@@ -7,13 +7,13 @@ module.exports = {
     init: function () {
         // Map of registered transformers keyed by URL path. Value is an array
         // [beforeFun, afterFun] where
-        // beforeFun = function(tenantId, req)
-        // afterFun = function(tenantId, req, respObj)
-        var transformers = {};
+        // beforeFun = function(tenantId, req) -> proxy options
+        // afterFun = function(tenantId, req, respObj, res)
+        var transformers = [];
 
-        var registerFun = function (path, beforeFun, afterFun) {
-            console.log("Registered", path);
-            transformers[path] = [beforeFun, afterFun];
+        var registerFun = function (method, urlPath, beforeFun, afterFun) {
+            console.log("Registered", urlPath);
+            transformers.push({method, urlPath, beforeFun, afterFun});
         }
         fs.readdirSync(transformersFolder).forEach(file => {
             var transformerPath = path.join(transformersFolder, file);
