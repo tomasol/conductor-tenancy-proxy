@@ -32,7 +32,19 @@ const getSearchAfter = function(tenantId, req, respObj) {
     }
 }
 
-// Create a new workflow definition
+// Start a new workflow with StartWorkflowRequest, which allows task to be executed in a domain
+/*
+curl -X POST -H "x-auth-organization: FB" -H "Content-Type: application/json" "localhost:8081/api/workflow" -d '
+{
+  "name": "fb2",
+  "version": 5,
+  "correlatonId": "corr1",
+  "ownerApp": "my_owner_app",
+  "input": {
+  }
+}
+'
+*/
 const postWorkflowBefore = function(tenantId, req) {
     // name must start with prefix
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
@@ -58,12 +70,14 @@ const postWorkflowBefore = function(tenantId, req) {
     reqObj.name = tenantWithUnderscore + reqObj.name;
     // add taskToDomain
     reqObj.taskToDomain = {};
-    reqObj.taskToDomain[taskWithUnderscore + '*'] = tenantId; //TODO: is this OK?
+    // reqObj.taskToDomain[tenantWithUnderscore + '*'] = tenantId; //TODO: is this OK?
+    console.debug('Transformed request to', reqObj);
+    return { buffer: utils.createProxyOptionsBuffer(reqObj) };
 }
 
 module.exports = {
     register: function(registerFun) {
         registerFun('get',  '/api/workflow/search', getSearchBefore, getSearchAfter);
-        registerFun('post', '/workflow', postWorkflowBefore, null);
+        registerFun('post', '/api/workflow', postWorkflowBefore, null);
     }
 };

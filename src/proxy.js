@@ -26,7 +26,8 @@ module.exports = {
                 if (entry.beforeFun) {
                     try {
                         var proxyOptions = entry.beforeFun(tenantId, req);
-                    }catch (err) {
+                        delete req.headers['content-length']; // length might be changed
+                    } catch (err) {
                         console.error('Got error in beforeFun', err);
                         res.status(500);
                         res.send('Cannot send request: ' + err);
@@ -36,11 +37,13 @@ module.exports = {
                 const _write = res.write; // backup real write method
                 // create wrapper that allows transforming output from target
                 res.write = function (data) {
-                    const respObj = JSON.parse(data);
                     if (entry.afterFun) {
+                        // TODO: parse only if data is json
+                        var respObj = JSON.parse(data);
                         entry.afterFun(tenantId, req, respObj, res);
+                        data = JSON.stringify(respObj);
                     }
-                    _write.call(res, JSON.stringify(respObj));
+                    _write.call(res, data);
                 }
                 proxy.web(req, res, proxyOptions);
             });
