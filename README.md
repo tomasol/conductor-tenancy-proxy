@@ -17,6 +17,23 @@ npm start
 npm run integration
 ```
 
+
+### End 2 end tests
+You need to run Conductor locally. The easiest 
+way to get Conductor up and running quickly is using
+docker-compose like this:
+```
+git clone https://github.com/Netflix/conductor.git
+cd conductor/docker
+docker-compose build
+docker-compose up -d
+```
+When conductor is running execute the following command:
+
+```
+npm run e2e
+```
+
 ## TODOs
 * handle connection issues, exceptions
 * Forwarded response headers are in lower case:
