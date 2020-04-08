@@ -24,12 +24,7 @@ const getSearchBefore = function(tenantId, req) {
 }
 
 const getSearchAfter = function(tenantId, req, respObj) {
-    const results = respObj['results'];
-    // iterate over workflows, remove tenantId
-    for (const workflowIdx in results) {
-        const workflow = results[workflowIdx];
-        utils.removeTenantId(workflow, 'workflowType', tenantId);
-    }
+    utils.removeTenantPrefix(tenantId, respObj, 'results[*].workflowType', false);
 }
 
 // Start a new workflow with StartWorkflowRequest, which allows task to be executed in a domain
@@ -70,14 +65,36 @@ const postWorkflowBefore = function(tenantId, req) {
     reqObj.name = tenantWithUnderscore + reqObj.name;
     // add taskToDomain
     reqObj.taskToDomain = {};
-    // reqObj.taskToDomain[tenantWithUnderscore + '*'] = tenantId; //TODO: is this OK?
+    reqObj.taskToDomain[tenantWithUnderscore + '*'] = tenantId; //TODO: is this OK?
     console.debug('Transformed request to', reqObj);
     return { buffer: utils.createProxyOptionsBuffer(reqObj) };
+}
+
+// Gets the workflow by workflow id
+/*
+curl  -H "x-auth-organization: FB" "localhost:8081/api/workflow/c0a438d4-25b7-4c12-8a29-3473d98b1ad7"
+*/
+const getExecutionStatusAfter = function(tenantId, req, respObj) {
+
+    const jsonPathToAllowGlobal = {
+        'workflowName': false,
+        'workflowType': false,
+        'tasks[*].taskDefName': true,
+        'tasks[*].taskType': true,
+        'tasks[*].workflowTask.name': true,
+        'tasks[*].workflowTask.taskDefinition.name': true,
+        'tasks[*].workflowType': false,
+        'workflowDefinition.name': false,
+        'workflowDefinition.tasks[*].name': true,
+        'workflowDefinition.tasks[*].taskDefinition.name': true
+    };
+    utils.removeTenantPrefixes(tenantId, respObj, jsonPathToAllowGlobal);
 }
 
 module.exports = {
     register: function(registerFun) {
         registerFun('get',  '/api/workflow/search', getSearchBefore, getSearchAfter);
         registerFun('post', '/api/workflow', postWorkflowBefore, null);
+        registerFun('get',  '/api/workflow/:workflowId', null, getExecutionStatusAfter);
     }
 };

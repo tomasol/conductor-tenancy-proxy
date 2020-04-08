@@ -14,7 +14,7 @@ npm start
 
 ### Integration tests
 ```
-npm run intergration
+npm run integration
 ```
 
 ## TODOs
