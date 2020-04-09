@@ -60,8 +60,8 @@ describe('Workflow API', function () {
     mockServer = mockApp.listen(mockServerPort, mockServerHost);
 
     // start test proxy server
-    const transformers = transformerRegistry.init();
     const proxyTarget = `http://${mockServerHost}:${mockServerPort}`;
+    const transformers = transformerRegistry.init(proxyTarget);
 
     const proxyRouter = proxy.configure(transformers, proxyTarget);
     const app = Router();
@@ -113,7 +113,6 @@ describe('Workflow API', function () {
         done();
       });
     });
-
 
     it('should pass query string with correct prefix', function (done) {
       mockedSearchFun = function (req, res) {

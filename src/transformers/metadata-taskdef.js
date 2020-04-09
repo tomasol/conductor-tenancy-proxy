@@ -43,7 +43,7 @@ curl -X POST -H "x-auth-organization: FX" "localhost:8081/api/metadata/taskdefs"
 '
 */
 // TODO: can this be disabled?
-const postTaskdefsBefore = function(tenantId, req) {
+const postTaskdefsBefore = function(tenantId, req, res, proxyCallback) {
     // iterate over taskdefs, prefix with tenantId
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     const reqObj = req.body;
@@ -56,17 +56,18 @@ const postTaskdefsBefore = function(tenantId, req) {
         // prepend tenantId
         taskdef.name = tenantWithUnderscore + taskdef.name;
     }
-    return {buffer: utils.createProxyOptionsBuffer(reqObj)};
+    proxyCallback({buffer: utils.createProxyOptionsBuffer(reqObj)});
 }
 
 /*
 curl  -H "x-auth-organization: FX" "localhost:8081/api/metadata/taskdefs/frinx"
 */
 // Gets the task definition
-const getTaskdefByNameBefore = function(tenantId, req) {
+const getTaskdefByNameBefore = function(tenantId, req, res, proxyCallback) {
     req.params.name = utils.withUnderscore(tenantId) + req.params.name;
     // modify url
     req.url = '/api/metadata/taskdefs/' + req.params.name;
+    proxyCallback();
 };
 const getTaskdefByNameAfter = function(tenantId, req, respObj, res) {
     if (res.status == 200) {
@@ -84,10 +85,11 @@ const getTaskdefByNameAfter = function(tenantId, req, respObj, res) {
 
 // TODO: can this be disabled?
 // Remove a task definition
-const deleteTaskdefByNameBefore = function(tenantId, req) {
+const deleteTaskdefByNameBefore = function(tenantId, req, res, proxyCallback) {
     req.params.name = utils.withUnderscore(tenantId) + req.params.name;
     // modify url
     req.url = '/api/metadata/taskdefs/' + req.params.name;
+    proxyCallback();
 }
 
 module.exports = {

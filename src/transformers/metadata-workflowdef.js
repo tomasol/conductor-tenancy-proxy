@@ -79,13 +79,14 @@ const getAllWorkflowsAfter = function (tenantId, req, respObj) {
 /*
 curl -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow/2/2" -X DELETE
 */
-const deleteWorkflowBefore = function (tenantId, req) {
+const deleteWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     // change URL: add prefix to name
     const name = tenantWithUnderscore + req.params.name;
     const newUrl = `/api/metadata/workflow/${name}/${req.params.version}`;
     console.log('Transformed url from', req.url, 'to', newUrl);
     req.url = newUrl;
+    proxyCallback();
 }
 
 // Retrieves workflow definition along with blueprint
@@ -93,7 +94,7 @@ const deleteWorkflowBefore = function (tenantId, req) {
 /*
 curl -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow/fb2?version=5"
 */
-const getWorkflowBefore = function (tenantId, req) {
+const getWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     const name = tenantWithUnderscore + req.params.name;
     var newUrl = `/api/metadata/workflow/${name}`;
@@ -105,6 +106,7 @@ const getWorkflowBefore = function (tenantId, req) {
     }
     console.log('Transformed url from', req.url, 'to', newUrl);
     req.url = newUrl;
+    proxyCallback();
 }
 
 
@@ -137,7 +139,7 @@ curl -X PUT -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow" 
     }
 ]'
 */
-const putWorkflowBefore = function (tenantId, req) {
+const putWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     const reqObj = req.body;
     for (var workflowIdx = 0; workflowIdx < reqObj.length; workflowIdx++) {
@@ -145,7 +147,7 @@ const putWorkflowBefore = function (tenantId, req) {
         sanitizeFrontEndWorkflowdef(workflowdef, tenantWithUnderscore);
     }
     console.debug('Transformed request to', reqObj);
-    return { buffer: utils.createProxyOptionsBuffer(reqObj) };
+    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
 }
 
 // Create a new workflow definition
@@ -177,12 +179,12 @@ curl -X POST -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow"
     }
 '
 */
-const postWorkflowBefore = function (tenantId, req) {
+const postWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     const reqObj = req.body;
     sanitizeFrontEndWorkflowdef(reqObj, tenantWithUnderscore);
     console.debug('Transformed request to', reqObj);
-    return { buffer: utils.createProxyOptionsBuffer(reqObj) };
+    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
 }
 
 module.exports = {

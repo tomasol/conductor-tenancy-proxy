@@ -22,18 +22,7 @@ module.exports = {
                     res.send('Cannot get tenantId:' + err);
                     return;
                 }
-                console.log('REQ', req.method, req.url, 'tenantId', tenantId);
-                if (entry.beforeFun) {
-                    try {
-                        var proxyOptions = entry.beforeFun(tenantId, req);
-                        delete req.headers['content-length']; // length might be changed
-                    } catch (err) {
-                        console.error('Got error in beforeFun', err);
-                        res.status(500);
-                        res.send('Cannot send request: ' + err);
-                        return;
-                    }
-                }
+                // prepare 'after'
                 const _write = res.write; // backup real write method
                 // create wrapper that allows transforming output from target
                 res.write = function (data) {
@@ -45,7 +34,25 @@ module.exports = {
                     }
                     _write.call(res, data);
                 }
-                proxy.web(req, res, proxyOptions);
+
+                // start with 'before'
+                console.log('REQ', req.method, req.url, 'tenantId', tenantId);
+                const proxyCallback = function(proxyOptions) {
+                    proxy.web(req, res, proxyOptions);
+                };
+                if (entry.beforeFun) {
+                    delete req.headers['content-length']; // fix content length changes
+                    try {
+                        entry.beforeFun(tenantId, req, res, proxyCallback);
+                    } catch (err) {
+                        console.error('Got error in beforeFun', err);
+                        res.status(500);
+                        res.send('Cannot send request: ' + err);
+                        return;
+                    }
+                } else {
+                    proxyCallback();
+                }
             });
         }
         return router;

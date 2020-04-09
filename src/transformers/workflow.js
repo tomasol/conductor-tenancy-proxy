@@ -1,11 +1,12 @@
 const qs = require('qs');
 const utils = require('../utils.js');
+const request = require('request');
 
 // Search for workflows based on payload and other parameters
 /*
  curl  -H "x-auth-organization: FB" "localhost:8081/api/workflow/search?query=status+IN+(FAILED)"
 */
-const getSearchBefore = function(tenantId, req) {
+const getSearchBefore = function (tenantId, req, res, proxyCallback) {
     // prefix query with workflowType STARTS_WITH tenantId_
     const originalQueryString = req._parsedUrl.query;
     const parsedQuery = qs.parse(originalQueryString);
@@ -21,9 +22,10 @@ const getSearchBefore = function(tenantId, req) {
     const newQueryString = qs.stringify(parsedQuery);
     console.log('Transformed query string from', originalQueryString, 'to', newQueryString);
     req.url = req._parsedUrl.pathname + '?' + newQueryString;
+    proxyCallback();
 }
 
-const getSearchAfter = function(tenantId, req, respObj) {
+const getSearchAfter = function (tenantId, req, respObj) {
     utils.removeTenantPrefix(tenantId, respObj, 'results[*].workflowType', false);
 }
 
@@ -40,7 +42,7 @@ curl -X POST -H "x-auth-organization: FB" -H "Content-Type: application/json" "l
 }
 '
 */
-const postWorkflowBefore = function(tenantId, req) {
+const postWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     // name must start with prefix
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     const reqObj = req.body;
@@ -67,14 +69,15 @@ const postWorkflowBefore = function(tenantId, req) {
     reqObj.taskToDomain = {};
     reqObj.taskToDomain[tenantWithUnderscore + '*'] = tenantId; //TODO: is this OK?
     console.debug('Transformed request to', reqObj);
-    return { buffer: utils.createProxyOptionsBuffer(reqObj) };
+    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
 }
 
 // Gets the workflow by workflow id
 /*
-curl  -H "x-auth-organization: FB" "localhost:8081/api/workflow/c0a438d4-25b7-4c12-8a29-3473d98b1ad7"
+curl  -H "x-auth-organization: FB" \
+    "localhost:8081/api/workflow/c0a438d4-25b7-4c12-8a29-3473d98b1ad7"
 */
-const getExecutionStatusAfter = function(tenantId, req, respObj) {
+const getExecutionStatusAfter = function (tenantId, req, respObj) {
 
     const jsonPathToAllowGlobal = {
         'workflowName': false,
@@ -91,10 +94,45 @@ const getExecutionStatusAfter = function(tenantId, req, respObj) {
     utils.removeTenantPrefixes(tenantId, respObj, jsonPathToAllowGlobal);
 }
 
+// Removes the workflow from the system
+/*
+curl  -H "x-auth-organization: FB" \
+    "localhost:8080/api/workflow/2dbb6e3e-c45d-464b-a9c9-2bbb16b7ca71/remove" -X DELETE
+*/
+const removeWorkflowBefore = function(tenantId, req, res, proxyCallback) {
+    const url = proxyTarget + '/api/workflow/' + req.params.workflowId;
+    // first make a HTTP request to validate that this workflow belongs to tenant
+    const requestOptions = {
+        url,
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/javascript'
+        }
+    };
+    console.debug('Requesting', requestOptions);
+    request(requestOptions, function (error, response, body) {
+        console.debug('Got', response.statusCode, body);
+        const workflow = JSON.parse(body);
+        // make sure name starts with prefix
+        const tenantWithUnderscore = utils.withUnderscore(tenantId);
+        if (workflow.workflowName.indexOf(tenantWithUnderscore) == 0) {
+            console.debug('Continuing');
+            proxyCallback();
+        } else {
+            console.error('Error trying to delete workflow of different tenant', tenantId, workflow);
+            res.status(401);
+            res.send('Unauthorized');
+        }
+    });
+}
+var proxyTarget;
+
 module.exports = {
-    register: function(registerFun) {
-        registerFun('get',  '/api/workflow/search', getSearchBefore, getSearchAfter);
+    register: function (registerFun, _proxyTarget) {
+        proxyTarget = _proxyTarget;
+        registerFun('get', '/api/workflow/search', getSearchBefore, getSearchAfter);
         registerFun('post', '/api/workflow', postWorkflowBefore, null);
-        registerFun('get',  '/api/workflow/:workflowId', null, getExecutionStatusAfter);
+        registerFun('get', '/api/workflow/:workflowId', null, getExecutionStatusAfter);
+        registerFun('delete', '/api/workflow/:workflowId/remove', removeWorkflowBefore, null);
     }
 };
