@@ -4,7 +4,7 @@ const request = require('request');
 
 // Search for workflows based on payload and other parameters
 /*
- curl  -H "x-auth-organization: FB" "localhost:8081/api/workflow/search?query=status+IN+(FAILED)"
+ curl -H "x-auth-organization: FB" "localhost:8081/api/workflow/search?query=status+IN+(FAILED)"
 */
 const getSearchBefore = function (tenantId, req, res, proxyCallback) {
     // prefix query with workflowType STARTS_WITH tenantId_
