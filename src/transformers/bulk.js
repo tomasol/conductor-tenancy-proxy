@@ -19,11 +19,18 @@ const bulkOperationBefore = function (tenantId, req, res, proxyCallback) {
         return;
     }
     // use search api to obtain workflow names
-    var queryUrl = proxyTarget + '/api/workflow/search?query=workflowId IN (';
+    const limitToTenant = 'workflowType STARTS_WITH \'' + tenantId + '_\''
+
+    var query = limitToTenant + ' AND workflowId IN (';
     for (var idx in workflows) {
-        queryUrl += workflows[idx] + ',';
+        const workflowId = workflows[idx];
+        // TODO: sanitize using regex
+        if (/^[a-z0-9\-]+$/i.test(workflowId)) {
+            query += workflowId + ',';
+        }
     }
-    queryUrl += ')';
+    query += ')';
+    const queryUrl = proxyTarget + '/api/workflow/search?query=' + query;
     // first make a HTTP request to validate that all workflows belong to tenant
     const requestOptions = {
         url: queryUrl,
@@ -36,15 +43,6 @@ const bulkOperationBefore = function (tenantId, req, res, proxyCallback) {
     request(requestOptions, function (error, response, body) {
         console.debug('Got', response.statusCode, body);
         const workflows = JSON.parse(body);
-        // make sure name of each workflow starts with prefix
-        try {
-            utils.removeTenantPrefix(tenantId, workflows, 'results[*].workflowType', false);
-        } catch (err) {
-            console.error('Authorization for bulk operation on workflows failed', workflows, err);
-            res.status(403);
-            res.send('Authorization for bulk operation on workflows failed');
-            return;
-        }
         // only keep found workflows
         const validWorkflowIds = utils.findValuesByJsonPath(workflows, 'results[*].workflowId', 'value');
         console.debug('Continuing', validWorkflowIds);
