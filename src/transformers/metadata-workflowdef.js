@@ -4,10 +4,9 @@
 const utils = require('../utils.js');
 const qs = require('qs');
 
-// util:
-// used in PUT, POST before methods to check that submitted workflow and its tasks
+// Utility used in PUT, POST before methods to check that submitted workflow and its tasks
 // do not contain any prefix. Prefix is added to workflowdef if input is valid.
-var sanitizeFrontEndWorkflowdef = function (workflowdef, tenantWithUnderscore) {
+const sanitizeWorkflowdefBefore = function (workflowdef, tenantWithUnderscore) {
     if (workflowdef.name.indexOf('_') == -1) {
         // validate tasks
         for (var taskIdx in workflowdef.tasks) {
@@ -38,6 +37,33 @@ var sanitizeFrontEndWorkflowdef = function (workflowdef, tenantWithUnderscore) {
     }
 }
 
+// Utility used after getting single or all workflowdefs to remove prefix from
+// workflowdef names, taskdef names.
+const sanitizeWorkflowdefAfter = function(tenantId, workflowdef) {
+    const tenantWithUnderscore = utils.withUnderscore(tenantId);
+    if (workflowdef.name.indexOf(tenantWithUnderscore) == 0) {
+        // keep only workflows with correct taskdefs,
+        // allowed are GLOBAL and those with tenantId prefix which will be removed
+        for (var taskIdx in workflowdef.tasks) {
+            const task = workflowdef.tasks[taskIdx];
+            if (task.name.indexOf(utils.withUnderscore(utils.GLOBAL_PREFIX)) == 0) {
+                // noop
+            } else if (task.name.indexOf(tenantWithUnderscore) == 0) {
+                // remove prefix
+                task.name = task.name.substr(tenantWithUnderscore.length);
+            } else {
+                console.warn('Removing workflow with invalid task', workflowdef);
+                // remove element
+                respObj.splice(workflowIdx, 1);
+            }
+        }
+        // remove prefix
+        workflowdef.name = workflowdef.name.substr(tenantWithUnderscore.length);
+    } else {
+        // remove element
+        respObj.splice(workflowIdx, 1);
+    }
+}
 
 
 // Retrieves all workflow definition along with blueprint
@@ -46,31 +72,9 @@ curl -H "x-auth-organization: FX" "localhost:8081/api/metadata/workflow"
 */
 const getAllWorkflowsAfter = function (tenantId, req, respObj) {
     // iterate over workflows, keep only those belonging to tenantId
-    const tenantWithUnderscore = utils.withUnderscore(tenantId);
     for (var workflowIdx = respObj.length - 1; workflowIdx >= 0; workflowIdx--) {
         const workflowdef = respObj[workflowIdx];
-        if (workflowdef.name.indexOf(tenantWithUnderscore) == 0) {
-            // keep only workflows with correct taskdefs,
-            // allowed are GLOBAL and those with tenantId prefix which will be removed
-            for (var taskIdx in workflowdef.tasks) {
-                const task = workflowdef.tasks[taskIdx];
-                if (task.name.indexOf(utils.withUnderscore(utils.GLOBAL_PREFIX)) == 0) {
-                    // noop
-                } else if (task.name.indexOf(tenantWithUnderscore) == 0) {
-                    // remove prefix
-                    task.name = task.name.substr(tenantWithUnderscore.length);
-                } else {
-                    console.warn('Removing workflow with invalid task', workflowdef);
-                    // remove element
-                    respObj.splice(workflowIdx, 1);
-                }
-            }
-            // remove prefix
-            workflowdef.name = workflowdef.name.substr(tenantWithUnderscore.length);
-        } else {
-            // remove element
-            respObj.splice(workflowIdx, 1);
-        }
+        sanitizeWorkflowdefAfter(tenantId, workflowdef);
     }
 }
 
@@ -108,7 +112,9 @@ const getWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     req.url = newUrl;
     proxyCallback();
 }
-
+const getWorkflowAfter = function (tenantId, req, respObj) {
+    sanitizeWorkflowdefAfter(tenantId, respObj);
+}
 
 // Create or update workflow definition
 // Underscore in name is not allowed.
@@ -144,7 +150,7 @@ const putWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const reqObj = req.body;
     for (var workflowIdx = 0; workflowIdx < reqObj.length; workflowIdx++) {
         const workflowdef = reqObj[workflowIdx];
-        sanitizeFrontEndWorkflowdef(workflowdef, tenantWithUnderscore);
+        sanitizeWorkflowdefBefore(workflowdef, tenantWithUnderscore);
     }
     console.debug('Transformed request to', reqObj);
     proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
@@ -182,7 +188,7 @@ curl -X POST -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow"
 const postWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     const reqObj = req.body;
-    sanitizeFrontEndWorkflowdef(reqObj, tenantWithUnderscore);
+    sanitizeWorkflowdefBefore(reqObj, tenantWithUnderscore);
     console.debug('Transformed request to', reqObj);
     proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
 }
@@ -191,7 +197,7 @@ module.exports = {
     register: function (registerFun) {
         registerFun('get', '/api/metadata/workflow', null, getAllWorkflowsAfter);
         registerFun('delete', '/api/metadata/workflow/:name/:version', deleteWorkflowBefore, null);
-        registerFun('get', '/api/metadata/workflow/:name', getWorkflowBefore, null);
+        registerFun('get', '/api/metadata/workflow/:name', getWorkflowBefore, getWorkflowAfter);
         registerFun('put', '/api/metadata/workflow', putWorkflowBefore, null);
         registerFun('post', '/api/metadata/workflow', postWorkflowBefore, null);
     }

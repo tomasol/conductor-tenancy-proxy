@@ -23,7 +23,15 @@ const getAllTaskdefsAfter = function(tenantId, req, respObj) {
         }
     }
 }
-
+const sanitizeTaskdefBefore = function(tenantId, taskdef) {
+    const tenantWithUnderscore = utils.withUnderscore(tenantId);
+    if (taskdef.name.indexOf('_')>-1) {
+        console.error('Name must not contain underscore', tenantId, reqObj);
+        throw 'Name must not contain underscore'; // TODO create Exception class
+    }
+    // prepend tenantId
+    taskdef.name = tenantWithUnderscore + taskdef.name;
+}
 // Create new task definition(s)
 // Underscore in name is not allowed.
 /*
@@ -42,20 +50,38 @@ curl -X POST -H "x-auth-organization: FX" "localhost:8081/api/metadata/taskdefs"
 ]
 '
 */
-// TODO: can this be disabled?
+// TODO: should this be disabled?
 const postTaskdefsBefore = function(tenantId, req, res, proxyCallback) {
     // iterate over taskdefs, prefix with tenantId
-    const tenantWithUnderscore = utils.withUnderscore(tenantId);
     const reqObj = req.body;
     for(var idx = 0; idx < reqObj.length; idx++) {
         const taskdef = reqObj[idx];
-        if (taskdef.name.indexOf('_')>-1) {
-            console.error('Name must not contain underscore', tenantId, reqObj);
-            throw 'Name must not contain underscore'; // TODO create Exception class
-        }
-        // prepend tenantId
-        taskdef.name = tenantWithUnderscore + taskdef.name;
+        sanitizeTaskdefBefore(tenantId, taskdef);
     }
+    proxyCallback({buffer: utils.createProxyOptionsBuffer(reqObj)});
+}
+
+// Update an existing task
+// Underscore in name is not allowed.
+/*
+curl -X PUT -H "x-auth-organization: FX" "localhost:8081/api/metadata/taskdefs" -H 'Content-Type: application/json' -d '
+    {
+      "name": "frinx",
+      "retryCount": 3,
+      "retryLogic": "FIXED",
+      "retryDelaySeconds": 10,
+      "timeoutSeconds": 400,
+      "timeoutPolicy": "TIME_OUT_WF",
+      "responseTimeoutSeconds": 180,
+      "ownerEmail": "foo@bar.baz"
+    }
+'
+*/
+// TODO: should this be disabled?
+const putTaskdefBefore = function(tenantId, req, res, proxyCallback) {
+    const reqObj = req.body;
+    const taskdef = reqObj;
+    sanitizeTaskdefBefore(tenantId, taskdef);
     proxyCallback({buffer: utils.createProxyOptionsBuffer(reqObj)});
 }
 
@@ -96,6 +122,7 @@ module.exports = {
     register: function(registerFun) {
         registerFun('get',    '/api/metadata/taskdefs', null, getAllTaskdefsAfter);
         registerFun('post',   '/api/metadata/taskdefs', postTaskdefsBefore, null);
+        registerFun('put',    '/api/metadata/taskdefs', putTaskdefBefore, null);
         registerFun('get',    '/api/metadata/taskdefs/:name', getTaskdefByNameBefore, getTaskdefByNameAfter);
         registerFun('delete', '/api/metadata/taskdefs/:name', deleteTaskdefByNameBefore, null);
     }
