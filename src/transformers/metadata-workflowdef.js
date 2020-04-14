@@ -39,6 +39,7 @@ const sanitizeWorkflowdefBefore = function (workflowdef, tenantWithUnderscore) {
 
 // Utility used after getting single or all workflowdefs to remove prefix from
 // workflowdef names, taskdef names.
+// Return true iif sanitization succeeded, false iif this workflowdef is invalid.
 const sanitizeWorkflowdefAfter = function(tenantId, workflowdef) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
     if (workflowdef.name.indexOf(tenantWithUnderscore) == 0) {
@@ -52,16 +53,14 @@ const sanitizeWorkflowdefAfter = function(tenantId, workflowdef) {
                 // remove prefix
                 task.name = task.name.substr(tenantWithUnderscore.length);
             } else {
-                console.warn('Removing workflow with invalid task', workflowdef);
-                // remove element
-                respObj.splice(workflowIdx, 1);
+                return false;
             }
         }
         // remove prefix
         workflowdef.name = workflowdef.name.substr(tenantWithUnderscore.length);
+        return true;
     } else {
-        // remove element
-        respObj.splice(workflowIdx, 1);
+        return false;
     }
 }
 
@@ -74,7 +73,12 @@ const getAllWorkflowsAfter = function (tenantId, req, respObj) {
     // iterate over workflows, keep only those belonging to tenantId
     for (var workflowIdx = respObj.length - 1; workflowIdx >= 0; workflowIdx--) {
         const workflowdef = respObj[workflowIdx];
-        sanitizeWorkflowdefAfter(tenantId, workflowdef);
+        const ok = sanitizeWorkflowdefAfter(tenantId, workflowdef, respObj);
+        if (!ok) {
+            console.warn('Removing workflow with invalid task or name', workflowdef);
+            // remove element
+            respObj.splice(workflowIdx, 1);
+        }
     }
 }
 
@@ -113,7 +117,11 @@ const getWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     proxyCallback();
 }
 const getWorkflowAfter = function (tenantId, req, respObj) {
-    sanitizeWorkflowdefAfter(tenantId, respObj);
+    const ok = sanitizeWorkflowdefAfter(tenantId, respObj);
+    if (!ok) {
+        console.error('Possible error in code: response contains invalid task or workflowdef name', tenantId);
+        throw 'Possible error in code: response contains invalid task or workflowdef name'; // TODO create Exception class
+    }
 }
 
 // Create or update workflow definition
