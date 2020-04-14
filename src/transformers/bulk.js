@@ -19,7 +19,8 @@ const bulkOperationBefore = function (tenantId, req, res, proxyCallback) {
         return;
     }
     // use search api to obtain workflow names
-    const limitToTenant = 'workflowType STARTS_WITH \'' + tenantId + '_\''
+    // Manually encode quotes due to https://github.com/request/request/issues/3181
+    const limitToTenant = 'workflowType STARTS_WITH &quot;' + tenantId + '_&quot;'
 
     var query = limitToTenant + ' AND workflowId IN (';
     for (var idx in workflows) {
@@ -35,9 +36,6 @@ const bulkOperationBefore = function (tenantId, req, res, proxyCallback) {
     const requestOptions = {
         url: queryUrl,
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/javascript'
-        }
     };
     console.debug('Requesting', requestOptions);
     request(requestOptions, function (error, response, body) {
