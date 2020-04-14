@@ -38,7 +38,7 @@ const sanitizeTaskdefBefore = function(tenantId, taskdef) {
 curl -X POST -H "x-auth-organization: FX" "localhost:8081/api/metadata/taskdefs" -H 'Content-Type: application/json' -d '
 [
     {
-      "name": "frinx",
+      "name": "bar",
       "retryCount": 3,
       "retryLogic": "FIXED",
       "retryDelaySeconds": 10,

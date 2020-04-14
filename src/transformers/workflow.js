@@ -4,7 +4,7 @@ const request = require('request');
 
 // Search for workflows based on payload and other parameters
 /*
- curl -H "x-auth-organization: FB" "localhost:8081/api/workflow/search?query=status+IN+(FAILED)"
+ curl -H "x-auth-organization: FX" "localhost:8081/api/workflow/search?query=status+IN+(FAILED)"
 */
 const getSearchBefore = function (tenantId, req, res, proxyCallback) {
     // prefix query with workflowType STARTS_WITH tenantId_
@@ -31,10 +31,10 @@ const getSearchAfter = function (tenantId, req, respObj) {
 
 // Start a new workflow with StartWorkflowRequest, which allows task to be executed in a domain
 /*
-curl -X POST -H "x-auth-organization: FB" -H "Content-Type: application/json" "localhost:8081/api/workflow" -d '
+curl -X POST -H "x-auth-organization: FX" -H "Content-Type: application/json" "localhost:8081/api/workflow" -d '
 {
-  "name": "fb2",
-  "version": 5,
+  "name": "fx3",
+  "version": 1,
   "correlatonId": "corr1",
   "ownerApp": "my_owner_app",
   "input": {
@@ -74,7 +74,7 @@ const postWorkflowBefore = function (tenantId, req, res, proxyCallback) {
 
 // Gets the workflow by workflow id
 /*
-curl  -H "x-auth-organization: FB" \
+curl  -H "x-auth-organization: FX" \
     "localhost:8081/api/workflow/c0a438d4-25b7-4c12-8a29-3473d98b1ad7"
 */
 const getExecutionStatusAfter = function (tenantId, req, respObj) {
@@ -96,7 +96,7 @@ const getExecutionStatusAfter = function (tenantId, req, respObj) {
 
 // Removes the workflow from the system
 /*
-curl  -H "x-auth-organization: FB" \
+curl  -H "x-auth-organization: FX" \
     "localhost:8080/api/workflow/2dbb6e3e-c45d-464b-a9c9-2bbb16b7ca71/remove" -X DELETE
 */
 const removeWorkflowBefore = function(tenantId, req, res, proxyCallback) {

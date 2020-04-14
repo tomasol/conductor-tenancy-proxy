@@ -81,7 +81,7 @@ const getAllWorkflowsAfter = function (tenantId, req, respObj) {
 // Removes workflow definition. It does not remove workflows associated with the definition.
 // Version is passed as url parameter.
 /*
-curl -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow/2/2" -X DELETE
+curl -H "x-auth-organization: FX" "localhost:8081/api/metadata/workflow/2/2" -X DELETE
 */
 const deleteWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
@@ -96,7 +96,7 @@ const deleteWorkflowBefore = function (tenantId, req, res, proxyCallback) {
 // Retrieves workflow definition along with blueprint
 // Version is passed as query parameter.
 /*
-curl -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow/fb2?version=5"
+curl -H "x-auth-organization: FX" "localhost:8081/api/metadata/workflow/fx3?version=1"
 */
 const getWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const tenantWithUnderscore = utils.withUnderscore(tenantId);
@@ -119,11 +119,32 @@ const getWorkflowAfter = function (tenantId, req, respObj) {
 // Create or update workflow definition
 // Underscore in name is not allowed.
 /*
-curl -X PUT -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow" \
+curl -X PUT -H "x-auth-organization: FX" "localhost:8081/api/metadata/workflow" \
   -H 'Content-Type: application/json' -d '
 [
     {
-    "name": "fb3",
+    "name": "fx3",
+    "description": "foo1",
+    "ownerEmail": "foo@bar.baz",
+    "version": 1,
+    "schemaVersion": 2,
+    "tasks": [
+        {
+        "name": "bar",
+        "taskReferenceName": "barref",
+        "type": "SIMPLE",
+        "inputParameters": {}
+        }
+    ]
+    }
+]'
+
+
+curl -X PUT -H "x-auth-organization: FX" "localhost:8081/api/metadata/workflow" \
+  -H 'Content-Type: application/json' -d '
+[
+    {
+    "name": "fx3",
     "description": "foo1",
     "ownerEmail": "foo@bar.baz",
     "version": 1,
@@ -159,11 +180,11 @@ const putWorkflowBefore = function (tenantId, req, res, proxyCallback) {
 // Create a new workflow definition
 // Underscore in name is not allowed.
 /*
-curl -X POST -H "x-auth-organization: FB" "localhost:8081/api/metadata/workflow" \
+curl -X POST -H "x-auth-organization: FX" "localhost:8081/api/metadata/workflow" \
   -H 'Content-Type: application/json' -d '
 
     {
-    "name": "fb3",
+    "name": "fx3",
     "description": "foo1",
     "ownerEmail": "foo@bar.baz",
     "version": 1,

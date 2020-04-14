@@ -6,7 +6,7 @@ const request = require('request');
 // used to get all metadata in a single request. If there are no
 // validation issues, request is passed to the proxy target.
 /*
-curl  -H "x-auth-organization: FB" \
+curl  -H "x-auth-organization: FX" \
     "localhost:8080/api/workflow/bulk/restart" -v -X POST \
     -H "Content-Type: application/json" -d '["381f879d-3225-4605-b1c4-91e1c00f8ab9"]'
 */
