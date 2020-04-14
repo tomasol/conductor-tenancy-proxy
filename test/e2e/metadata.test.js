@@ -7,18 +7,31 @@ const metadataWorkflowEndpoint = '/metadata/workflow';
 
 let proxyServer;
 
-beforeAll(() => {
-  proxyServer = initProxy(superagent);
-  insertTestData(superagent, taskdefEndpoint, taskdefsDummyData, console.log);
-  insertTestData(superagent, metadataWorkflowEndpoint, workflowDummyData, console.log);
+beforeAll((done) => {
+  console.debug('beforeAll started');
+  proxyServer = initProxy(superagent, () => {
+    insertTestData(superagent, taskdefEndpoint, taskdefsDummyData, () => {
+      insertTestData(superagent, metadataWorkflowEndpoint, workflowDummyData, () => {
+        console.debug('beforeAll done');
+        done();
+      });
+    });
+  });
 });
 
-afterAll(() => {
-  proxyServer.close();
-  deleteTestData(superagent,
-      `${metadataWorkflowEndpoint}/${workflowDummyData.name}/${workflowDummyData.version}`,
-      console.log);
-  deleteTestData(superagent, `${taskdefEndpoint}/${taskdefsDummyData[0].name}`, console.log);
+afterAll((done) => {
+  console.debug('afterAll started');
+  proxyServer.close(() => {
+    deleteTestData(superagent,
+    `${metadataWorkflowEndpoint}/${workflowDummyData.name}/${workflowDummyData.version}`,
+    () => {
+      deleteTestData(superagent, `${taskdefEndpoint}/${taskdefsDummyData[0].name}`, () => {
+        console.log('afterAll done');
+        done();
+      }
+      );
+    });
+  });
 });
 
 test('POST/DELETE metadata/taskdefs', done => {
@@ -31,7 +44,7 @@ test('POST/DELETE metadata/taskdefs', done => {
 
 test('PUT metadata/taskdefs', done => {
   const newDescription = 'new taskdef description';
-  taskdefsDummyData.description = newDescription;
+  taskdefsDummyData[0].description = newDescription;
   superagent
   .put(taskdefEndpoint)
   .set('Content-Type', 'application/json')

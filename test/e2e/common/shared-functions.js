@@ -4,7 +4,7 @@ const transformerRegistry = require('../../../src/transformer-registry.js');
 const bodyParser = require('body-parser');
 const superagentPrefix = require('superagent-prefix');
 
-const initProxy = function (superagent) {
+const initProxy = function (superagent, callback) {
 
   //adding tenant ID to all requests
   superagent.use((req) => {
@@ -19,14 +19,17 @@ const initProxy = function (superagent) {
   //adding default base url to all requests
   superagent.use(superagentPrefix(`http://${testProxyHost}:${testProxyPort}/api`));
 
-  const transformers = transformerRegistry.init();
   const proxyTarget = `http://${conductorServerHost}:${conductorServerPort}`;
+  const transformers = transformerRegistry.init(proxyTarget);
 
   const proxyRouter = proxy.configure(transformers, proxyTarget);
   let app = Router();
   app.use(bodyParser.urlencoded({extended: false}));
   app.use('/', bodyParser.json(), proxyRouter);
-  return app.listen(testProxyPort);
+  return app.listen(testProxyPort, function() {
+    console.info(`Started testing proxy on http://${testProxyHost}:${testProxyPort}`);
+    callback();
+  });
 }
 
 const errorCallback = done => { return err => done(`${err.status} error message: ${err.message}`); };
