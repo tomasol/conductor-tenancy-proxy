@@ -69,7 +69,7 @@ const postWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     reqObj.taskToDomain = {};
     reqObj.taskToDomain[tenantWithUnderscore + '*'] = tenantId; //TODO: is this OK?
     console.debug('Transformed request to', reqObj);
-    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
+    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj, req) });
 }
 
 // Gets the workflow by workflow id

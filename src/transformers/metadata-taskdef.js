@@ -58,7 +58,7 @@ const postTaskdefsBefore = function(tenantId, req, res, proxyCallback) {
         const taskdef = reqObj[idx];
         sanitizeTaskdefBefore(tenantId, taskdef);
     }
-    proxyCallback({buffer: utils.createProxyOptionsBuffer(reqObj)});
+    proxyCallback({buffer: utils.createProxyOptionsBuffer(reqObj, req)});
 }
 
 // Update an existing task
@@ -82,7 +82,7 @@ const putTaskdefBefore = function(tenantId, req, res, proxyCallback) {
     const reqObj = req.body;
     const taskdef = reqObj;
     sanitizeTaskdefBefore(tenantId, taskdef);
-    proxyCallback({buffer: utils.createProxyOptionsBuffer(reqObj)});
+    proxyCallback({buffer: utils.createProxyOptionsBuffer(reqObj, req)});
 }
 
 /*

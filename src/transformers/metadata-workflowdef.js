@@ -182,7 +182,7 @@ const putWorkflowBefore = function (tenantId, req, res, proxyCallback) {
         sanitizeWorkflowdefBefore(workflowdef, tenantWithUnderscore);
     }
     console.debug('Transformed request to', reqObj);
-    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
+    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj, req) });
 }
 
 // Create a new workflow definition
@@ -219,7 +219,7 @@ const postWorkflowBefore = function (tenantId, req, res, proxyCallback) {
     const reqObj = req.body;
     sanitizeWorkflowdefBefore(reqObj, tenantWithUnderscore);
     console.debug('Transformed request to', reqObj);
-    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj) });
+    proxyCallback({ buffer: utils.createProxyOptionsBuffer(reqObj, req) });
 }
 
 module.exports = {

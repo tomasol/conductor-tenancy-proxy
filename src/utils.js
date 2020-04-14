@@ -30,7 +30,7 @@ module.exports = {
         this.removeTenantPrefix(tenantId, json, attr, false);
     },
 
-    createProxyOptionsBuffer: function (modifiedBody) {
+    createProxyOptionsBuffer: function (modifiedBody, req) {
         // if request transformer returned modified body,
         // serialize it to new request stream. Original
         // request stream was already consumed. See `buffer` option
@@ -39,7 +39,12 @@ module.exports = {
             modifiedBody = JSON.stringify(modifiedBody);
         }
         if (typeof modifiedBody === 'string') {
+            req.headers['content-length'] = modifiedBody.length;
+            // create an array
             modifiedBody = [modifiedBody];
+        } else {
+            console.error('Unknown type', modifiedBody);
+            throw 'Unknown type';
         }
         return streamify(modifiedBody);
     },

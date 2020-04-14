@@ -41,7 +41,6 @@ module.exports = {
                     proxy.web(req, res, proxyOptions);
                 };
                 if (entry.beforeFun) {
-                    delete req.headers['content-length']; // fix content length changes
                     try {
                         entry.beforeFun(tenantId, req, res, proxyCallback);
                     } catch (err) {
