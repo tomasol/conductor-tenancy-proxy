@@ -4,7 +4,7 @@ const transformerRegistry = require('../../../src/transformer-registry.js');
 const bodyParser = require('body-parser');
 const superagentPrefix = require('superagent-prefix');
 
-const testProxyPort = process.env.TEST_PROXY_PORT || 8082;
+const testProxyPort = process.env.TEST_PROXY_PORT || 8084;
 const testProxyHost = process.env.TEST_PROXY_HOST || 'localhost';
 const conductorServerPort = process.env.TEST_CONDUCTOR_PORT || 8080;
 const conductorServerHost = process.env.TEST_CONDUCTOR_HOST || 'localhost';
