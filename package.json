@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/app.js",
-    "integration": "./node_modules/mocha/bin/mocha --recursive test/integration/",
-    "e2e": "jest"
+    "integration": "jest test/integration",
+    "e2e": "jest test/e2e"
   },
   "keywords": [],
   "author": "",
@@ -20,11 +20,10 @@
     "stream-array": "^1.1.2"
   },
   "devDependencies": {
-    "mocha": "^7.1.1",
-    "request": "^2.88.2",
     "jest": "^25.2.7",
+    "request": "^2.88.2",
     "superagent": "^5.2.2",
-    "superagent-use": "^0.1.0",
-    "superagent-prefix": "^0.0.2"
+    "superagent-prefix": "^0.0.2",
+    "superagent-use": "^0.1.0"
   }
 }
