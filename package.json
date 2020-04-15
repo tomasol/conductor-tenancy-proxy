@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "integration": "./node_modules/mocha/bin/mocha --recursive test/integration/",
-    "e2e": "jest"
+    "e2e": "jest --config ./test/e2e/jest.config.js"
   },
   "keywords": [],
   "author": "",

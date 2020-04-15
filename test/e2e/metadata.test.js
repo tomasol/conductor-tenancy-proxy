@@ -1,37 +1,33 @@
 const { workflowDummyData, taskdefsDummyData } = require('./common/test-data');
-const  { initProxy, errorCallback, insertTestData, deleteTestData } = require('./common/shared-functions');
+const  { initAgent, errorCallback, insertTestData, deleteTestData } = require('./common/shared-functions');
 const superagent = require('superagent-use')(require('superagent'));
 
 const taskdefEndpoint = '/metadata/taskdefs';
 const metadataWorkflowEndpoint = '/metadata/workflow';
 
-let proxyServer;
-
 beforeAll((done) => {
   console.debug('beforeAll started');
-  proxyServer = initProxy(superagent, () => {
-    insertTestData(superagent, taskdefEndpoint, taskdefsDummyData, () => {
-      insertTestData(superagent, metadataWorkflowEndpoint, workflowDummyData, () => {
-        console.debug('beforeAll done');
-        done();
-      });
+  initAgent(superagent);
+
+  insertTestData(superagent, taskdefEndpoint, taskdefsDummyData, () => {
+    insertTestData(superagent, metadataWorkflowEndpoint, workflowDummyData, () => {
+      console.debug('beforeAll done');
+      done();
     });
   });
 });
 
 afterAll((done) => {
   console.debug('afterAll started');
-  proxyServer.close(() => {
-    deleteTestData(superagent,
-    `${metadataWorkflowEndpoint}/${workflowDummyData.name}/${workflowDummyData.version}`,
-    () => {
-      deleteTestData(superagent, `${taskdefEndpoint}/${taskdefsDummyData[0].name}`, () => {
-        console.log('afterAll done');
-        done();
-      }
-      );
-    });
-  });
+  deleteTestData(superagent,
+      `${metadataWorkflowEndpoint}/${workflowDummyData.name}/${workflowDummyData.version}`,
+      () => {
+        deleteTestData(superagent, `${taskdefEndpoint}/${taskdefsDummyData[0].name}`, () => {
+              console.log('afterAll done');
+              done();
+            }
+        );
+      });
 });
 
 test('POST/DELETE metadata/taskdefs', done => {

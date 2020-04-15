@@ -4,21 +4,13 @@ const transformerRegistry = require('../../../src/transformer-registry.js');
 const bodyParser = require('body-parser');
 const superagentPrefix = require('superagent-prefix');
 
-const initProxy = function (superagent, callback) {
+const testProxyPort = process.env.TEST_PROXY_PORT || 8082;
+const testProxyHost = process.env.TEST_PROXY_HOST || 'localhost';
+const conductorServerPort = process.env.TEST_CONDUCTOR_PORT || 8080;
+const conductorServerHost = process.env.TEST_CONDUCTOR_HOST || 'localhost';
 
-  //adding tenant ID to all requests
-  superagent.use((req) => {
-    req.header['x-auth-organization'] = 'integrationTestTenant';
-    return req;
-  });
-  const testProxyPort = process.env.TEST_PROXY_PORT || 8082;
-  const testProxyHost = process.env.TEST_PROXY_HOST || 'localhost';
-  const conductorServerPort = process.env.TEST_CONDUCTOR_PORT || 8080;
-  const conductorServerHost = process.env.TEST_CONDUCTOR_HOST || 'localhost';
 
-  //adding default base url to all requests
-  superagent.use(superagentPrefix(`http://${testProxyHost}:${testProxyPort}/api`));
-
+const initProxy = function () {
   const proxyTarget = `http://${conductorServerHost}:${conductorServerPort}`;
   const transformers = transformerRegistry.init(proxyTarget);
 
@@ -28,8 +20,18 @@ const initProxy = function (superagent, callback) {
   app.use('/', bodyParser.json(), proxyRouter);
   return app.listen(testProxyPort, function() {
     console.info(`Started testing proxy on http://${testProxyHost}:${testProxyPort}`);
-    callback();
   });
+}
+
+const initAgent = function (superagent) {
+  //adding tenant ID to all requests
+  superagent.use((req) => {
+    req.header['x-auth-organization'] = 'integrationTestTenant';
+    return req;
+  });
+
+  //adding default base url to all requests
+  superagent.use(superagentPrefix(`http://${testProxyHost}:${testProxyPort}/api`));
 }
 
 const errorCallback = done => { return err => done(`${err.status} error message: ${err.message}`); };
@@ -62,4 +64,4 @@ const deleteTestData = function(superagent, endpointUrl, done, expect) {
 }
 
 
-module.exports = { initProxy, errorCallback, insertTestData, deleteTestData };
+module.exports = { initAgent, errorCallback, insertTestData, deleteTestData, initProxy };
