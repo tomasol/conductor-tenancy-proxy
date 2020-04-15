@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "integration": "jest test/integration",
-    "e2e": "jest test/e2e"
+    "e2e": "jest  --config ./test/e2e/jest.config.js test/e2e"
   },
   "keywords": [],
   "author": "",
