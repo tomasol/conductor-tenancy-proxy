@@ -19,7 +19,7 @@ npm run integration
 
 
 ### End 2 end tests
-You need to run Conductor locally. The easiest 
+You need to run Conductor locally. The easiest
 way to get Conductor up and running quickly is using
 docker-compose like this:
 ```
@@ -30,9 +30,15 @@ docker-compose up -d
 ```
 When conductor is running execute the following command:
 
+
+```
+jest --testPathPattern test/e2e/sometest.js
+```
+To run all tests (currently buggy, see TODOs), use
 ```
 npm run e2e
 ```
+
 
 ## TODOs
 * handle connection issues, exceptions
@@ -55,3 +61,5 @@ npm run e2e
 < server: Jetty(9.3.z-SNAPSHOT)
 < Transfer-Encoding: chunked
 ```
+* e2e tests must be run separately due to error 'connect ECONNREFUSED 127.0.0.1:8082'
+that is probably caused by code handling proxy startup or cleanup.
